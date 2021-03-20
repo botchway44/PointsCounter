@@ -23,30 +23,49 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlin.random.Random
 
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.text.style.TextAlign
+import java.util.*
 
+
+/**
+ * The NumberGameViewModel handles the logic of the Game
+ * Comparisons, generators, and assignments.
+ * */
 class NumberGameViewModel : ViewModel() {
 
-   fun compareValues(isLeft : Boolean){
-        if(isLeft && this._leftValue?.value!! > this._rightValue?.value!!){
+    /**
+     * Comparator function for the button clicks
+     * @param isLeft : Boolean
+     */
+    fun compareValues(isLeft : Boolean){
 
-            _points.value = _points?.value?.plus(1)
+        //If Left is pressed and comparison is valid score a point
+        if(isLeft && this._leftValue?.value!! > this._rightValue?.value!!)  _points.value = _points?.value?.plus(1)
 
-        }else if(!isLeft && this._leftValue?.value!! < this._rightValue?.value!!){
-            _points.value = _points?.value?.minus(1)
-        }
+        //If Right is pressed and comparison is valid score a point
+        else if(!isLeft && this._leftValue?.value!! < this._rightValue?.value!!) _points.value = _points?.value?.plus(1)
+
+        //Else deduct a point
+        else _points.value = _points?.value?.minus(1)
 
        this.seedValues()
     }
-  private fun generateRandomNumber(): Int {
-      return Random(100).nextInt(0,100);
+
+    /***
+     * A random Generator from the Java.util.* package
+     */
+    private fun generateRandomNumber(): Int {
+        return Random().nextInt(100)
     }
 
+    /***
+     * Seeds the Left and right values with random numbers
+     */
     fun seedValues(){
-        this._leftValue.value = this.generateRandomNumber();
-        this._rightValue.value = this.generateRandomNumber();
+        this._leftValue.value = generateRandomNumber()
+        this._rightValue.value = generateRandomNumber()
     }
 
     // LiveData holds state which is observed by the UI
@@ -56,8 +75,8 @@ class NumberGameViewModel : ViewModel() {
     private val _rightValue = MutableLiveData(0)
 
     val points: LiveData<Int> = _points
-    val leftValue: LiveData<Int> = _points
-    val rightValue: LiveData<Int> = _points
+    val leftValue: LiveData<Int> = _leftValue
+    val rightValue: LiveData<Int> = _rightValue
 
 }
 
@@ -68,18 +87,12 @@ class MainActivity : ComponentActivity() {
         setContent {
            MaterialTheme(
 
-
            ) {
               Scaffold(
-                content = {
-                    PointsCounterTheme {
-                        // A surface container using the 'background' color from the theme
-                        Surface(color = MaterialTheme.colors.background) {
-                            Scaffold() {
-                                DefaultPreview()
-                            }
-                        }
-                    }
+                  topBar = { AppBar() },
+                  bottomBar = {},
+                    content = {
+                        GameView()
                 }
               )
            }
@@ -88,33 +101,27 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun TopAppBar(
-    backgroundColor : Color,
+fun AppBar(
 ){
-    
-    Row() {
-        
+    TopAppBar() {
+        Row() {
+            Text(text = "Bigger Number Game")
+        }
     }
 }
 
 @Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
+fun GameView(
+    gameViewModel: NumberGameViewModel  = viewModel()
+){
 
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview( ) {
-
-    val gameViewModel: NumberGameViewModel  = viewModel();
+    //Seed the game with random numbers
     gameViewModel.seedValues()
 
     PointsCounterTheme {
 
-
-
         Column(
-            modifier  = Modifier.fillMaxHeight(),
+            modifier  = Modifier.fillMaxHeight().padding(all = 4.dp),
             verticalArrangement =  Arrangement.SpaceBetween,
             horizontalAlignment =  Alignment.CenterHorizontally
         ) {
@@ -125,39 +132,43 @@ fun DefaultPreview( ) {
                 horizontalAlignment =  Alignment.CenterHorizontally,
             ) {
 
-                Text( text = "Bigger Number Game", fontSize = 8.em )
+                Text( text = "Bigger Number Game", fontSize = 8.em ,textAlign = TextAlign.Center,)
 
-                Text("Press the button with the larger number. If you get it right, you gain a point. If you get it wrong you loose a point.")
+                Text( modifier = Modifier.padding(horizontal = 10.dp) , textAlign = TextAlign.Center, text = "Press the button with the larger number. If you get it right, you gain a point. If you get it wrong you loose a point.")
             }
 
-//            Spacer( modifier = Modifier.padding(all = Dp(20f)))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement =  Arrangement.SpaceBetween
+            ) {
+                Button(
 
-           Row(
-               modifier = Modifier
-                   .fillMaxWidth()
-                   .padding(horizontal = 20.dp),
-               horizontalArrangement =  Arrangement.SpaceBetween
-           ) {
-               Button(
-                   
-                   onClick = { gameViewModel.compareValues(true) }) {
+                    onClick = { gameViewModel.compareValues(true) }) {
 
-                   val value : State<Int> = gameViewModel.leftValue.observeAsState(0)
-                   Text(text = value.value.toString())
-               }
+                    val value : State<Int> = gameViewModel.leftValue.observeAsState(0)
+                    Text(text = value.value.toString())
+                }
 
-               Button(
-                   onClick = { gameViewModel.compareValues(false) }) {
-                   val value : State<Int> = gameViewModel.rightValue.observeAsState(0)
+                Button(
+                    onClick = { gameViewModel.compareValues(false) }) {
+                    val value : State<Int> = gameViewModel.rightValue.observeAsState(0)
 
-                   Text(text = value.value.toString())
-               }
-           }
+                    Text(text = value.value.toString())
+                }
+            }
 
-            val value : State<Int> = gameViewModel.rightValue.observeAsState(0)
+            val value : State<Int> = gameViewModel.points.observeAsState(0)
 
-            Text(text = "Points : $"+ value.value.toString())
+            Text(text = "Points : $"+ value.value.toString(), )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DefaultPreview( ) {
+    GameView()
 }
 
