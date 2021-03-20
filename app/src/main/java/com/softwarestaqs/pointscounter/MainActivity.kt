@@ -169,6 +169,6 @@ fun GameView(
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview( ) {
-    GameView()
+
 }
 
